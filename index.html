@@ -1,0 +1,1427 @@
+
+        <style>
+        .dark-mode body {
+            background-color: #18181b !important;
+            color: #e5e7eb !important;
+        }
+        .dark-mode #mode-selection, .dark-mode #game-container {
+            background-color: #23272f !important;
+            color: #e5e7eb !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.45) !important;
+        }
+        .dark-mode #game-board {
+            background-color: #23272f !important;
+            border-color: #374151 !important;
+        }
+        .dark-mode .square {
+            background-color: #2d2f36 !important;
+            border-color: #374151 !important;
+            color: #e5e7eb !important;
+        }
+        .dark-mode .square:nth-child(even) {
+            background-color: #23272f !important;
+        }
+        .dark-mode .action-card-square {
+            background-color: #facc15 !important;
+            border-color: #eab308 !important;
+        }
+        .dark-mode .player-card {
+            background-color: #23272f !important;
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
+        }
+        .dark-mode #dice-area {
+            background-color: #23272f !important;
+            border-color: #374151 !important;
+        }
+        .dark-mode #dice-number {
+            color: #facc15 !important;
+        }
+        .dark-mode button, .dark-mode .mode-button, .dark-mode .modal-buttons button {
+            background-image: linear-gradient(to bottom right, #374151, #23272f) !important;
+            color: #facc15 !important;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.65), 0 6px 12px rgba(0,0,0,0.45), inset 0 -6px 10px rgba(0,0,0,0.35) !important;
+        }
+        .dark-mode button.secondary-btn {
+            background-image: linear-gradient(to bottom right, #23272f, #374151) !important;
+        }
+        .dark-mode #message-box {
+            background-color: #23272f !important;
+            color: #facc15 !important;
+            border-color: #eab308 !important;
+        }
+        .dark-mode .modal-content {
+            background-color: #23272f !important;
+            color: #e5e7eb !important;
+        }
+        </style>
+    <div id="top-bar" style="position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:row;gap:1rem;align-items:center;">
+        <button id="dark-mode-toggle" style="padding:0.7rem 1.2rem;border-radius:1rem;font-weight:bold;background:#23272f;color:#facc15;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer;">🌙 Dark Mode</button>
+        <button id="sound-toggle" title="Mute/Unmute" style="padding:0.7rem 1.2rem;border-radius:1rem;font-weight:bold;background:#34D399;color:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer;">🔊</button>
+        <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume" style="width:80px;">
+        <button id="help-btn" title="Help" style="padding:0.7rem 1.2rem;border-radius:1rem;font-weight:bold;background:#2563eb;color:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer;">❓</button>
+    </div>
+    <script>
+    // --- Top Bar Controls Initialization ---
+    window.addEventListener('load', function() {
+        // Sound controls
+        let isMuted = false;
+        let globalVolume = 0.5;
+        const soundToggleBtn = document.getElementById('sound-toggle');
+        const volumeSlider = document.getElementById('volume-slider');
+        soundToggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            soundToggleBtn.textContent = isMuted ? '🔇' : '🔊';
+        });
+        volumeSlider.addEventListener('input', (e) => {
+            globalVolume = parseFloat(e.target.value);
+        });
+        // Help modal controls
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === helpModal) helpModal.style.display = 'none';
+        });
+        // Dark mode controls
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        function setDarkMode(on) {
+            if (on) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = '☀️ Light Mode';
+            } else {
+                document.body.classList.remove('dark-mode');
+                darkModeToggle.textContent = '🌙 Dark Mode';
+            }
+            localStorage.setItem('darkMode', on ? '1' : '0');
+        }
+        darkModeToggle.addEventListener('click', () => {
+            setDarkMode(!document.body.classList.contains('dark-mode'));
+        });
+        if (localStorage.getItem('darkMode') === '1') {
+            setDarkMode(true);
+        }
+        // Override playAudio globally
+        window.playAudio = function(src) {
+            if (src && !isMuted) {
+                const audio = new Audio(src);
+                audio.volume = globalVolume;
+                audio.play().catch(e => {});
+            }
+        }
+    });
+    // Dark mode toggle logic
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    function setDarkMode(on) {
+        if (on) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️ Light Mode';
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeToggle.textContent = '🌙 Dark Mode';
+        }
+        localStorage.setItem('darkMode', on ? '1' : '0');
+    }
+    darkModeToggle.addEventListener('click', () => {
+        setDarkMode(!document.body.classList.contains('dark-mode'));
+    });
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === '1') {
+        setDarkMode(true);
+    }
+    </script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Papan Kartu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2f0f7; /* Lighter blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Ensure full viewport height */
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        /* Base styling for both main containers */
+        #mode-selection, #game-container {
+            display: flex; /* Will be toggled by JS */
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px; /* Max width for the entire game/selection */
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            padding: 1.5rem;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh; /* Ensure it takes up enough vertical space */
+        }
+
+        /* Initially hide game container */
+        #game-container.hidden, #mode-selection.hidden {
+            display: none;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            aspect-ratio: 1 / 1; /* Make it square */
+            width: 100%;
+            max-width: 400px; /* Smaller max width for board on mobile */
+            margin: 0 auto;
+            border: 5px solid #4a5568;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            position: relative;
+            background-color: #cce7f5;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .square {
+            border: 1px solid #a0aec0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 0.1rem;
+            font-size: 0.6rem;
+            font-weight: bold;
+            box-sizing: border-box;
+            position: relative;
+            background-color: #f7fafc;
+            transition: background-color 0.3s ease;
+        }
+
+        .square:nth-child(even) {
+            background-color: #edf2f7;
+        }
+
+        .action-card-square {
+            background-color: #ffedb3;
+            border: 2px solid #d69e2e;
+            box-shadow: inset 0 0 8px rgba(214, 158, 46, 0.5);
+        }
+
+        .player-token {
+            position: absolute;
+            width: 2.2rem;
+            height: 2.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: transform 0.2s ease-out;
+            background: none;
+            border: none;
+            box-shadow: none;
+        }
+
+        #game-info {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        #player-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .player-card {
+            border: 1px solid #cbd5e0;
+            border-radius: 1rem;
+            padding: 0.8rem;
+            background-color: #fdfdfd;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            min-width: 120px;
+            flex: 1 1 auto;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .player-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+        .player-card p {
+            font-size: 0.8rem;
+        }
+
+        .player-card.active {
+            border-color: #38a169;
+            box-shadow: 0 0 20px rgba(56, 161, 105, 0.4);
+            transform: translateY(-3px);
+        }
+
+        /* Dice Number Animation Styling */
+        #dice-area {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fdfdff;
+            border: 2px solid #a0aec0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: background-color 0.3s ease;
+        }
+
+        #dice-number {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+            will-change: transform, opacity;
+        }
+
+        /* Keren 3D Button Styling */
+        button, .mode-button, .modal-buttons button {
+            padding: 1.2rem 2.5rem;
+            border-radius: 1.25rem;
+            font-weight: bold;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            background-image: linear-gradient(to bottom right, #6EE7B7, #34D399);
+            color: white;
+            border: none;
+            min-width: 220px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35),
+                        0 6px 12px rgba(0, 0, 0, 0.2),
+                        inset 0 -6px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button.secondary-btn {
+            background-image: linear-gradient(to bottom right, #a0aec0, #718096); /* Grayish gradient */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2),
+                        0 4px 5px rgba(0, 0, 0, 0.1),
+                        inset 0 -3px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        button.secondary-btn:hover {
+            background-image: linear-gradient(to bottom right, #718096, #a0aec0);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3),
+                        0 6px 10px rgba(0, 0, 0, 0.15),
+                        inset 0 -3px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        button.secondary-btn:active {
+            background-image: linear-gradient(to bottom right, #718096, #a0aec0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
+                        inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+
+        button::before, .mode-button::before, .modal-buttons button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%) scale(0);
+            z-index: -1;
+        }
+
+        button:hover::before, .mode-button:hover::before, .modal-buttons button:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        button:hover, .mode-button:hover, .modal-buttons button:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.45),
+                        0 9px 18px rgba(0, 0, 0, 0.25),
+                        inset 0 -6px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active, .mode-button:active, .modal-buttons button:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25),
+                        inset 0 4px 10px rgba(0, 0, 0, 0.4);
+            background-image: linear-gradient(to bottom right, #34D399, #6EE7B7);
+        }
+
+        button:disabled, .mode-button:disabled, .modal-buttons button:disabled {
+            background-image: linear-gradient(to bottom right, #ccc, #bbb);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        #message-box {
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #1976d2;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 1.8rem;
+        }
+        .modal-content p {
+            font-size: 1.1rem;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            #game-container {
+                flex-direction: row;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 2rem;
+                max-width: 1000px;
+                height: 85vh;
+                min-height: unset;
+            }
+
+            #game-board {
+                width: 500px;
+                height: 500px;
+                max-width: none;
+            }
+
+            #game-info {
+                flex: 1;
+                margin-left: 2rem;
+                align-items: flex-start;
+                height: 100%;
+                justify-content: space-between;
+            }
+
+            #player-info {
+                justify-content: flex-start;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .player-card {
+                flex: none;
+                width: 100%;
+                max-width: 250px;
+            }
+
+            #dice-area {
+                margin-top: auto;
+                margin-bottom: 0;
+            }
+
+            button {
+                min-width: 150px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            #game-board {
+                width: 600px;
+                height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Cara Bermain</h2>
+            <ul class="text-left mb-4" style="font-size:1.1rem;line-height:1.7;">
+                <li>🎲 Lempar dadu untuk memindahkan pion di papan.</li>
+                <li>🃏 Jika pion mendarat di petak kuning, ambil kartu aksi dan ikuti instruksinya.</li>
+                <li>🏆 Pemain pertama yang mencapai petak terakhir menang.</li>
+                <li>🔊 Gunakan tombol suara di kanan atas untuk mute/unmute dan atur volume.</li>
+                <li>🌙 Gunakan tombol di kanan atas untuk mengaktifkan mode gelap.</li>
+            </ul>
+            <button id="close-help-btn" class="mode-button">Tutup</button>
+        </div>
+    </div>
+    <!-- Mode Selection Screen -->
+    <div id="mode-selection">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Mode Game</h2>
+        <button id="pvp-mode-btn" class="mode-button">Player vs Player</button>
+        <button id="cpu-mode-btn" class="mode-button">Player vs CPU</button>
+        <!-- Removed music toggle button -->
+    </div>
+
+    <!-- Game Container (initially hidden) -->
+    <div id="game-container" class="hidden">
+        <!-- Game Board -->
+        <div id="game-board"></div>
+
+        <!-- Game Info & Controls -->
+        <div id="game-info" class="flex flex-col gap-4">
+            <h1 class="text-3xl font-bold text-center mb-4">Game Papan Kartu</h1>
+
+            <!-- Player Information -->
+            <div id="player-info"></div>
+
+            <!-- Game Controls -->
+            <div class="flex flex-col items-center gap-4 mt-4 w-full">
+                <div id="dice-area">
+                    <span id="dice-number">1</span>
+                </div>
+                <button id="roll-dice-btn">Lempar Dadu</button>
+                <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                    <button id="restart-game-btn" class="secondary-btn">Mulai Ulang</button>
+                    <button id="back-to-menu-btn" class="secondary-btn">Kembali ke Menu</button>
+                </div>
+            </div>
+
+            <!-- Message Box -->
+            <div id="message-box">Selamat datang di Game Papan Kartu! Lempar dadu untuk memulai.</div>
+        </div>
+    </div>
+
+    <!-- Modal for Card Effects -->
+    <div id="card-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="card-modal-title" class="text-2xl font-bold mb-4">Kartu Aksi!</h2>
+            <p id="card-modal-text" class="mb-4 text-lg"></p>
+            <div class="modal-buttons">
+                <button id="card-modal-ok-btn" class="bg-blue-500 hover:bg-blue-600">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Modal for Win/Game Over -->
+    <div id="win-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="win-modal-title" class="text-3xl font-bold mb-4 text-green-700">Selamat!</h2>
+            <p id="win-modal-text" class="mb-6 text-xl"></p>
+            <div class="modal-buttons">
+                <button id="play-again-btn" class="mode-button">Main Lagi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const boardSize = 10; // 10x10 board
+        const totalSquares = boardSize * boardSize;
+        const numActionCardSquares = 12; // Jumlah petak kartu aksi yang akan diacak
+
+        // Initial player data (names will be adjusted based on mode)
+        const initialPlayersData = [
+            { id: 0, name: "Pemain 1", position: 1, tokenColor: "#FF6347" }, // Tomato
+            { id: 1, name: "Pemain 2", position: 1, tokenColor: "#4682B4" }  // SteelBlue
+        ];
+        let players = []; // This will hold the active player objects
+
+        let currentPlayerIndex = 0;
+        let gameActive = true;
+        let isCardEffectActive = false; // To prevent multiple actions during card effect
+        let actionCardSquares = []; // Akan diisi secara acak saat inisialisasi
+        let gameMode = ''; // 'PvP' or 'PvCPU'
+
+        // Global map to store token elements for efficient access
+        const playerTokenElements = new Map();
+
+        // Action Cards
+        const actionCards = [
+            {
+                name: "Maju Cepat!",
+                description: "Pindah 3 petak ke depan.",
+                effect: (player) => {
+                    animatePlayerMovement(player, 3);
+                }
+            },
+            {
+                name: "Mundur Teratur!",
+                description: "Pindah 2 petak ke belakang.",
+                effect: (player) => {
+                    animatePlayerMovement(player, -2);
+                }
+            },
+            {
+                name: "Geser Lawan!",
+                description: "Lawan Anda mundur 4 petak.",
+                effect: (player) => {
+                    const opponent = players.find(p => p.id !== player.id);
+                    if (opponent) {
+                        animatePlayerMovement(opponent, -4);
+                    } else {
+                        // If no opponent (e.g., in a future single-player mode), just proceed
+                        isCardEffectActive = false;
+                        checkWin(player);
+                    }
+                }
+            },
+            {
+                name: "Tukar Posisi!",
+                description: "Tukar posisi dengan lawan Anda.",
+                effect: (player) => {
+                    const opponent = players.find(p => p.id !== player.id);
+                    if (opponent) {
+                        const playerPos = player.position;
+                        const opponentPos = opponent.position;
+
+                        player.position = opponentPos;
+                        opponent.position = playerPos;
+
+                        showMessage(`${player.name} bertukar posisi dengan ${opponent.name}!`);
+                        updatePlayerUI();
+                        placePlayersOnBoard();
+
+                        isCardEffectActive = false; // <<< THIS IS THE KEY FIX
+
+                        setTimeout(() => {
+                            let playerWon = false;
+                            let opponentWon = false;
+
+                            if (player.position === totalSquares) {
+                                playerWon = true;
+                            }
+                            if (opponent.position === totalSquares) {
+                                opponentWon = true;
+                            }
+
+                            if (playerWon) {
+                                checkWin(player); // This will show modal and stop game
+                            } else if (opponentWon) {
+                                checkWin(opponent); // This will show modal and stop game
+                            } else {
+                                // If no one won, explicitly call nextTurn()
+                                nextTurn();
+                            }
+                        }, 800); // Small delay for visual update
+                    } else {
+                        // Fallback if no opponent (e.g., single player mode, not applicable here but good practice)
+                        isCardEffectActive = false; // Ensure flag is reset
+                        nextTurn();
+                    }
+                }
+            },
+            {
+                name: "Lompat Maju!",
+                description: "Pindah ke petak 'Kartu Aksi' berikutnya.",
+                effect: (player) => {
+                    // Filter actionCardSquares to only include squares after current player's position
+                    const futureActionSquares = actionCardSquares.filter(s => s > player.position).sort((a,b) => a-b);
+                    if (futureActionSquares.length > 0) {
+                        const nextActionSquare = futureActionSquares[0];
+                        const stepsToMove = nextActionSquare - player.position;
+                        animatePlayerMovement(player, stepsToMove);
+                    } else {
+                        showMessage("Tidak ada petak 'Kartu Aksi' berikutnya untuk dilompati.", 'info');
+                        isCardEffectActive = false; // Reset here as no movement animation will call it
+                        checkWin(player);
+                    }
+                }
+            },
+            {
+                name: "Dadu Ekstra!",
+                description: "Dapatkan giliran tambahan!",
+                effect: (player) => {
+                    showMessage(`${player.name} mendapatkan giliran ekstra!`);
+                    rollDiceBtn.disabled = false; // Re-enable dice for the same player
+                    isCardEffectActive = false; // Reset this flag for extra turn
+                    // If CPU got extra turn, trigger its roll after a delay
+                    if (gameMode === 'PvCPU' && player.id === 1) {
+                        setTimeout(() => {
+                            const roll = rollDice();
+                            setTimeout(() => {
+                                animatePlayerMovement(players[currentPlayerIndex], roll);
+                            }, 1000); // Delay for dice animation
+                        }, 1500); // CPU thinking delay
+                    }
+                }
+            },
+            // --- NEW ACTION CARDS ---
+            {
+                name: "Bekukan Lawan!",
+                description: "Lawan Anda kehilangan 1 giliran.",
+                effect: (player) => {
+                    const opponent = players.find(p => p.id !== player.id);
+                    if (opponent) {
+                        opponent.skipNextTurn = true; // New property to skip turn
+                        showMessage(`${opponent.name} akan melewati giliran berikutnya!`);
+                    } else {
+                        showMessage("Tidak ada lawan untuk dibekukan.", 'info');
+                    }
+                    isCardEffectActive = false; // Reset after effect
+                    checkWin(player); // Proceed to check win/next turn
+                }
+            },
+            {
+                name: "Kembali ke Awal!",
+                description: "Pindah kembali ke petak 1.",
+                effect: (player) => {
+                    const stepsToMove = 1 - player.position; // Calculate steps to move to 1
+                    animatePlayerMovement(player, stepsToMove);
+                }
+            },
+            {
+                name: "Dadu Ganda!",
+                description: "Lempar dua dadu dan jumlahkan hasilnya.",
+                effect: (player) => {
+                    showMessage(`${player.name} melempar dua dadu!`);
+                    const roll1 = Math.floor(Math.random() * 6) + 1;
+                    const roll2 = Math.floor(Math.random() * 6) + 1;
+                    const totalRoll = roll1 + roll2;
+
+                    // Animate dice twice, then move
+                    let currentRollAnimation = 0;
+                    const animateDoubleDice = () => {
+                        if (currentRollAnimation === 0) {
+                            diceNumberEl.textContent = roll1;
+                            diceNumberEl.style.transform = 'scale(1.2)';
+                            playDiceRollSound(); // Play sound for first roll
+                            setTimeout(() => {
+                                diceNumberEl.style.transform = 'scale(1)';
+                                currentRollAnimation++;
+                                setTimeout(animateDoubleDice, 500); // Short pause
+                            }, 300);
+                        } else if (currentRollAnimation === 1) {
+                            diceNumberEl.textContent = roll2;
+                            diceNumberEl.style.transform = 'scale(1.2)';
+                            playDiceRollSound(); // Play sound for second roll
+                            setTimeout(() => {
+                                diceNumberEl.style.transform = 'scale(1)';
+                                currentRollAnimation++;
+                                setTimeout(animateDoubleDice, 500); // Short pause
+                            }, 300);
+                        } else {
+                            diceNumberEl.textContent = totalRoll; // Display sum
+                            showMessage(`${player.name} melempar ${roll1} dan ${roll2}. Total: ${totalRoll}!`);
+                            isCardEffectActive = false; // Reset after dice animation is done
+                            setTimeout(() => {
+                                animatePlayerMovement(player, totalRoll);
+                            }, 1000); // Delay before movement
+                        }
+                    };
+                    animateDoubleDice();
+                }
+            },
+            {
+                name: "Pindah ke Petak 50!",
+                description: "Langsung pindah ke petak 50.",
+                effect: (player) => {
+                    const stepsToMove = 50 - player.position;
+                    animatePlayerMovement(player, stepsToMove);
+                }
+            }
+        ];
+
+        // --- DOM Elements ---
+        const modeSelectionEl = document.getElementById('mode-selection');
+        const pvpModeBtn = document.getElementById('pvp-mode-btn');
+        const cpuModeBtn = document.getElementById('cpu-mode-btn');
+        const gameContainerEl = document.getElementById('game-container');
+
+        const gameBoardEl = document.getElementById('game-board');
+        const playerInfoEl = document.getElementById('player-info');
+        const diceAreaEl = document.getElementById('dice-area');
+        const diceNumberEl = document.getElementById('dice-number');
+        const rollDiceBtn = document.getElementById('roll-dice-btn');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const messageBoxEl = document.getElementById('message-box');
+
+        // Card Modal
+        const cardModal = document.getElementById('card-modal');
+        const cardModalTitle = document.getElementById('card-modal-title');
+        const cardModalText = document.getElementById('card-modal-text');
+        const cardModalOkBtn = document.getElementById('card-modal-ok-btn');
+
+        // Win Modal
+        const winModal = document.getElementById('win-modal');
+        const winModalTitle = document.getElementById('win-modal-title');
+        const winModalText = document.getElementById('win-modal-text');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        // --- Audio Setup ---
+        // Local audio URLs from Assets folder
+        const AUDIO_URLS = {
+            diceRoll: "Assets/dice.mp3",
+            move: "Assets/move.mp3",
+            card: "Assets/card.mp3",
+            win: "Assets/win.mp3",
+            lose: "Assets/lose.mp3",
+            click: "Assets/click.mp3",
+            menuMusic: "Assets/menu.mp3"
+        };
+
+        // Menu music control
+        let menuMusicAudio = null;
+        let isMenuMusicPlaying = false;
+        function playClickSound() {
+            playAudio(AUDIO_URLS.click);
+        }
+
+        function startMenuMusic() {
+            if (!isMenuMusicPlaying) {
+                menuMusicAudio = new Audio(AUDIO_URLS.menuMusic);
+                menuMusicAudio.loop = true;
+                menuMusicAudio.volume = (typeof window.globalVolume !== 'undefined') ? window.globalVolume : 0.35;
+                if (!window.isMuted) {
+                    menuMusicAudio.play().catch(e => {});
+                }
+                isMenuMusicPlaying = true;
+            }
+        }
+
+        function stopMenuMusic() {
+            if (menuMusicAudio) {
+                menuMusicAudio.pause();
+                menuMusicAudio.currentTime = 0;
+                isMenuMusicPlaying = false;
+            }
+        }
+
+        // Use global playAudio for all sounds
+        function playAudio(src) {
+            if (window.playAudio) {
+                window.playAudio(src);
+            }
+        }
+
+        function playDiceRollSound() {
+            playAudio(AUDIO_URLS.diceRoll);
+        }
+
+        function playMoveSound() {
+            playAudio(AUDIO_URLS.move);
+        }
+
+        function playCardSound() {
+            playAudio(AUDIO_URLS.card);
+        }
+
+        function playWinSound() {
+            playAudio(AUDIO_URLS.win);
+        }
+
+        // Removed toggleBackgroundMusic function
+
+
+        // --- Game Functions ---
+        // --- Menu Music and Click Sound Integration ---
+        // Play menu music on menu show
+        document.addEventListener('DOMContentLoaded', () => {
+            startMenuMusic();
+            // Sync mute/volume for menu music
+            window.isMuted = false;
+            window.globalVolume = 0.5;
+        });
+
+        // Play click sound on all menu buttons
+        [pvpModeBtn, cpuModeBtn].forEach(btn => {
+            btn.addEventListener('click', playClickSound);
+        });
+
+        // Stop menu music when entering game
+        [pvpModeBtn, cpuModeBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                stopMenuMusic();
+            });
+        });
+
+        // Play click sound on restart/back/game buttons
+        [restartGameBtn, backToMenuBtn, playAgainBtn, cardModalOkBtn].forEach(btn => {
+            btn.addEventListener('click', playClickSound);
+        });
+
+        // Resume menu music when returning to menu
+        backToMenuBtn.addEventListener('click', () => {
+            setTimeout(() => {
+                startMenuMusic();
+            }, 500);
+        });
+
+        /**
+         * Shuffles an array in place.
+         * @param {Array} array - The array to shuffle.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * Helper function to get square element by its logical board number (1-100, snake pattern).
+         * This maps the logical board number to the correct linear HTML square ID.
+         * @param {number} logicalBoardNumber - The 1-indexed number on the board (1 to 100) following the snake pattern.
+         * @returns {HTMLElement} The corresponding square DOM element.
+         */
+        function getSquareElementByLogicalBoardNumber(logicalBoardNumber) {
+            // Determine the logical row (0-indexed from bottom: 0 for 1-10, 1 for 11-20, etc.)
+            const logicalRow = Math.floor((logicalBoardNumber - 1) / boardSize);
+            // Determine the position within that logical row (0-indexed)
+            const posInLogicalRow = (logicalBoardNumber - 1) % boardSize;
+
+            // Calculate the visual row (0-indexed from top: 0 for 91-100, 1 for 81-90, etc.)
+            const visualRow = boardSize - 1 - logicalRow;
+
+            let visualCol;
+            if (logicalRow % 2 === 0) { // Logical rows 0, 2, 4... (1-10, 21-30, etc.) are visually left-to-right
+                visualCol = posInLogicalRow;
+            } else { // Logical rows 1, 3, 5... (11-20, 31-40, etc.) are visually right-to-left
+                visualCol = boardSize - 1 - posInLogicalRow;
+            }
+
+            // Calculate the 1-indexed HTML linear ID
+            const htmlLinearId = (visualRow * boardSize) + visualCol + 1;
+            return document.getElementById(`square-${htmlLinearId}`);
+        }
+
+        /**
+         * Initializes the game board visually with squares and action card markers.
+         * Randomly places action card squares.
+         */
+        function initializeBoard() {
+            gameBoardEl.innerHTML = ''; // Clear existing board
+
+            // Reset player positions for a new game
+            players.forEach(player => {
+                player.position = 1;
+                player.skipNextTurn = false; // Reset skip turn status
+            });
+            currentPlayerIndex = 0;
+            gameActive = true;
+            isCardEffectActive = false;
+
+            // Generate random action card squares
+            let possibleActionSquares = [];
+            // Exclude start (1) and end (100) from being action card squares
+            for (let i = 2; i < totalSquares; i++) {
+                possibleActionSquares.push(i);
+            }
+            shuffleArray(possibleActionSquares);
+            actionCardSquares = possibleActionSquares.slice(0, numActionCardSquares).sort((a, b) => a - b); // Sort for 'Lompat Maju' card
+
+            for (let i = 0; i < totalSquares; i++) { // Loop 0 to 99 for 100 squares
+                const squareEl = document.createElement('div');
+                // The HTML ID will be 1-indexed, starting from top-left (1) to bottom-right (100)
+                const htmlLinearId = i + 1;
+                squareEl.id = `square-${htmlLinearId}`;
+                squareEl.classList.add('square');
+
+                // Calculate the logical board number (1-100, snake pattern) that should be displayed in this HTML square
+                const visualRow = Math.floor(i / boardSize); // 0-indexed visual row (0 to 9) from top
+                const visualCol = i % boardSize; // 0-indexed visual column (0 to 9)
+
+                let logicalBoardNumberForDisplay;
+                if (visualRow % 2 === 0) { // Even visual rows (0, 2, ...) are for logical numbers 100-91, 80-71, etc.
+                    // These are the rows where numbers go from high to low
+                    logicalBoardNumberForDisplay = totalSquares - (visualRow * boardSize) - visualCol;
+                } else { // Odd visual rows (1, 3, ...) are for logical numbers 81-90, 61-70, etc.
+                    // These are the rows where numbers go from low to high (reversed order in terms of visual column)
+                    logicalBoardNumberForDisplay = (totalSquares - (visualRow * boardSize) - (boardSize - 1)) + visualCol;
+                }
+                
+                squareEl.textContent = logicalBoardNumberForDisplay;
+
+                if (actionCardSquares.includes(logicalBoardNumberForDisplay)) {
+                    squareEl.classList.add('action-card-square');
+                    squareEl.title = "Kartu Aksi!";
+                }
+
+                gameBoardEl.appendChild(squareEl);
+            }
+
+            // Create and place player tokens initially
+            playerTokenElements.clear(); // Clear previous tokens
+            players.forEach(player => {
+                const tokenEl = document.createElement('div');
+                tokenEl.id = `player-token-${player.id}`;
+                tokenEl.classList.add('player-token');
+                // Use PNG asset for pion
+                const img = document.createElement('img');
+                img.src = player.id === 0 ? 'Assets/player1.png' : 'Assets/player2-cpu.png';
+                img.alt = `Pion Player ${player.id + 1}`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+                tokenEl.appendChild(img);
+                playerTokenElements.set(player.id, tokenEl); // Store reference
+
+                // Place on initial square (logical board number 1)
+                const initialSquareEl = getSquareElementByLogicalBoardNumber(1);
+                if (initialSquareEl) {
+                    initialSquareEl.appendChild(tokenEl);
+                    // Initial positioning within the square
+                    const tokenOffset = player.id * 10;
+                    tokenEl.style.left = `${tokenOffset + 5}px`;
+                    tokenEl.style.top = `5px`;
+                }
+            });
+        }
+
+        /**
+         * Places all player tokens on their current board positions.
+         * This function now just updates the parent of existing tokens.
+         */
+        function placePlayersOnBoard() {
+            players.forEach(player => {
+                const tokenEl = playerTokenElements.get(player.id);
+                if (!tokenEl) return; // Should not happen
+
+                const targetSquareEl = getSquareElementByLogicalBoardNumber(player.position);
+
+                if (targetSquareEl && tokenEl.parentElement !== targetSquareEl) {
+                    targetSquareEl.appendChild(tokenEl);
+                    // Re-apply positioning within the new square
+                    const tokenOffset = player.id * 10;
+                    tokenEl.style.left = `${tokenOffset + 5}px`;
+                    tokenEl.style.top = `5px`;
+                }
+            });
+        }
+
+        /**
+         * Updates the UI for all players (active player and position).
+         */
+        function updatePlayerUI() {
+            playerInfoEl.innerHTML = '';
+            players.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.classList.add('player-card', 'p-4', 'rounded-xl', 'shadow-md', 'bg-white');
+                if (index === currentPlayerIndex) {
+                    playerCard.classList.add('active', 'border-green-500');
+                } else {
+                    playerCard.classList.remove('active', 'border-green-500');
+                }
+                playerCard.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2 flex items-center justify-center gap-2">
+                        <span class="w-4 h-4 rounded-full inline-block" style="background-color: ${player.tokenColor};"></span>
+                        ${player.name}
+                    </h3>
+                    <p class="text-sm">Posisi: <span class="font-semibold">${player.position}</span></p>
+                `;
+                playerInfoEl.appendChild(playerCard);
+            });
+        }
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - Optional type (e.g., 'error', 'success').
+         */
+        function showMessage(message, type = 'info') {
+            messageBoxEl.textContent = message;
+            messageBoxEl.className = 'mt-4 rounded-lg p-4 text-center text-sm'; // Reset classes
+            if (type === 'error') {
+                messageBoxEl.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+            } else if (type === 'success') {
+                messageBoxEl.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+            } else {
+                messageBoxEl.classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700');
+            }
+        }
+
+        /**
+         * Rolls a single die and updates its display with a cool number animation.
+         * @returns {number} The value of the die.
+         */
+        function rollDice() {
+            const finalRoll = Math.floor(Math.random() * 6) + 1;
+            let animationCount = 0;
+            const maxAnimations = 15; // More rapid changes
+            const animationDuration = 40; // ms per change
+
+            diceNumberEl.style.transition = 'none'; // Disable transition for rapid changes
+            diceNumberEl.style.transform = 'translateY(0) scale(1)';
+            diceNumberEl.style.opacity = '1';
+
+            playDiceRollSound(); // Play dice roll sound
+
+            const animateRoll = () => {
+                if (animationCount < maxAnimations) {
+                    diceNumberEl.textContent = Math.floor(Math.random() * 6) + 1;
+                    // More dynamic movement and scale for flicker
+                    diceNumberEl.style.transform = `translateY(${Math.random() * 30 - 15}px) scale(${0.8 + Math.random() * 0.4})`;
+                    diceNumberEl.style.opacity = `${0.3 + Math.random() * 0.7}`;
+                    animationCount++;
+                    setTimeout(animateRoll, animationDuration);
+                } else {
+                    // Final state
+                    diceNumberEl.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; // Re-enable transition for final snap
+                    diceNumberEl.textContent = finalRoll;
+                    diceNumberEl.style.transform = 'translateY(0) scale(1)';
+                    diceNumberEl.style.opacity = '1';
+                }
+            };
+
+            animateRoll();
+            return finalRoll;
+        }
+
+        /**
+         * Moves a player visually step-by-step with animation.
+         * @param {object} player - The player object to move.
+         * @param {number} totalSteps - Total number of steps to move (can be negative for backward).
+         */
+        function animatePlayerMovement(player, totalSteps) {
+            let stepsTaken = 0;
+            const isMovingForward = totalSteps > 0;
+            const stepDirection = isMovingForward ? 1 : -1;
+
+            rollDiceBtn.disabled = true; // Keep button disabled during animation
+            isCardEffectActive = true; // Set flag to prevent new actions during animation
+
+            const moveStep = () => {
+                if (stepsTaken < Math.abs(totalSteps)) {
+                    // Update player's position by one step
+                    let newPos = player.position + stepDirection;
+
+                    // Handle passing 100 or going below 1
+                    if (newPos > totalSquares) {
+                        newPos = totalSquares; // Stop at 100
+                        showMessage(`${player.name} mencapai akhir papan!`);
+                    } else if (newPos < 1) {
+                        newPos = 1; // Stop at 1
+                        showMessage(`${player.name} mundur melewati awal papan!`);
+                    }
+
+                    player.position = newPos; // Update actual position
+                    updatePlayerUI(); // Update UI
+                    placePlayersOnBoard(); // Visually move token
+                    playMoveSound(); // Play move sound for each step
+
+                    stepsTaken++;
+                    // If moving to the final square (100), speed up the last step slightly
+                    const delay = (player.position === totalSquares && stepsTaken === Math.abs(totalSteps)) ? 100 : 200;
+                    setTimeout(moveStep, delay); // Delay for animation speed per square
+                } else {
+                    // Animation complete, proceed with game logic
+                    isCardEffectActive = false; // Reset flag
+                    checkActionCard(player); // This will then call checkWin or nextTurn
+                }
+            };
+
+            moveStep(); // Start the animation
+        }
+
+        /**
+         * Checks if the player landed on an action card square and draws a card.
+         * @param {object} player - The current player object.
+         */
+        function checkActionCard(player) {
+            if (actionCardSquares.includes(player.position)) {
+                playCardSound(); // Play card sound
+                drawActionCard(player);
+            } else {
+                checkWin(player); // If no card, check for win immediately
+            }
+        }
+
+        /**
+         * Draws and applies an action card effect.
+         * @param {object} player - The player who drew the card.
+         */
+        function drawActionCard(player) {
+            isCardEffectActive = true; // Set flag to indicate card effect is active
+            const randomCard = actionCards[Math.floor(Math.random() * actionCards.length)];
+
+            cardModalTitle.textContent = randomCard.name;
+            cardModalText.textContent = randomCard.description;
+            cardModal.style.display = 'flex';
+
+            cardModalOkBtn.onclick = () => {
+                cardModal.style.display = 'none';
+                randomCard.effect(player); // Apply the card effect
+                // The effect itself is now responsible for managing isCardEffectActive and calling nextTurn/checkWin.
+            };
+        }
+
+        /**
+         * Checks if the current player has won the game.
+         * @param {object} player - The current player.
+         */
+        function checkWin(player) {
+            if (player.position === totalSquares) {
+                showMessage(`${player.name} memenangkan game Papan Kartu!`, 'success');
+                gameActive = false;
+                rollDiceBtn.disabled = true;
+
+                playWinSound(); // Play win sound
+
+                // Show win modal
+                winModalTitle.textContent = "Selamat!";
+                winModalText.textContent = `${player.name} memenangkan permainan!`;
+                winModal.style.display = 'flex';
+            } else {
+                nextTurn();
+            }
+        }
+
+        /**
+         * Advances to the next player's turn.
+         */
+        function nextTurn() {
+            if (!gameActive) return; // Don't proceed if game is over
+
+            // If the last card effect was "Dadu Ekstra!", don't change player
+            // Reset title after extra turn is granted
+            if (cardModalTitle.textContent === "Dadu Ekstra!") {
+                cardModalTitle.textContent = "Kartu Aksi!"; // Reset for next card draw
+            } else {
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            }
+
+            const currentPlayer = players[currentPlayerIndex];
+
+            // Check if current player needs to skip a turn
+            if (currentPlayer.skipNextTurn) {
+                showMessage(`${currentPlayer.name} melewati giliran ini!`, 'info');
+                currentPlayer.skipNextTurn = false; // Reset flag
+                setTimeout(nextTurn, 1500); // Automatically move to next player after a delay
+                return; // Exit this turn
+            }
+
+            // Set warna dadu sesuai pemain saat giliran berganti
+            diceAreaEl.style.backgroundColor = currentPlayer.tokenColor;
+
+            updatePlayerUI();
+            showMessage(`Giliran ${currentPlayer.name}.`);
+
+            // --- CPU Logic ---
+            if (gameMode === 'PvCPU' && currentPlayer.id === 1) { // Assuming Player 2 (id 1) is CPU
+                rollDiceBtn.disabled = true; // Disable button for CPU turn
+                showMessage(`Giliran CPU (${currentPlayer.name}). CPU sedang berpikir...`);
+                setTimeout(() => {
+                    const roll = rollDice();
+                    // Delay movement slightly to allow dice animation to play
+                    setTimeout(() => {
+                        animatePlayerMovement(currentPlayer, roll);
+                    }, 1000); // Delay for dice animation
+                }, 1500); // CPU thinking delay
+            } else {
+                rollDiceBtn.disabled = false; // Enable dice roll for human player
+            }
+        }
+
+        /**
+         * Initializes the game after mode selection.
+         */
+        function initializeGame() {
+            // Set players array based on mode
+            players = JSON.parse(JSON.stringify(initialPlayersData)); // Deep copy to reset
+            if (gameMode === 'PvCPU') {
+                players[1].name = "CPU"; // Change name for CPU player
+            }
+
+            initializeBoard();
+            updatePlayerUI();
+            showMessage(`Selamat datang di Game Papan Kartu! Giliran ${players[currentPlayerIndex].name}.`);
+            // Set warna dadu awal saat game dimuat
+            diceAreaEl.style.backgroundColor = players[currentPlayerIndex].tokenColor;
+            rollDiceBtn.disabled = false; // Enable for Player 1
+
+            // If CPU is the first player, trigger its turn
+            if (gameMode === 'PvCPU' && players[currentPlayerIndex].id === 1) {
+                nextTurn(); // This will trigger CPU's first move
+            }
+        }
+
+        /**
+         * Restarts the current game mode.
+         */
+        function restartGame() {
+            winModal.style.display = 'none'; // Hide win modal if visible
+            initializeGame(); // Re-initialize game with current mode
+            showMessage(`Game diulang! Giliran ${players[currentPlayerIndex].name}.`);
+        }
+
+        /**
+         * Returns to the mode selection screen.
+         */
+        function backToMenu() {
+            winModal.style.display = 'none'; // Hide win modal if visible
+            gameContainerEl.classList.add('hidden'); // Hide game container
+            modeSelectionEl.classList.remove('hidden'); // Show mode selection
+            // Reset any game state that might affect new game start if needed
+            // (initializeGame handles most of this when a mode is selected again)
+            diceNumberEl.textContent = '1'; // Reset dice display
+            diceAreaEl.style.backgroundColor = initialPlayersData[0].tokenColor; // Reset dice color
+            showMessage("Pilih mode game untuk memulai.", 'info');
+        }
+
+
+        // --- Event Listeners ---
+        rollDiceBtn.addEventListener('click', () => {
+            if (!gameActive || isCardEffectActive) {
+                showMessage("Game sudah berakhir atau efek kartu sedang aktif!", 'error');
+                return;
+            }
+
+            rollDiceBtn.disabled = true; // Disable until turn ends
+            const roll = rollDice();
+            // Delay player movement slightly to allow dice animation to play
+            setTimeout(() => {
+                animatePlayerMovement(players[currentPlayerIndex], roll);
+            }, 1000); // Adjust delay to match or exceed dice animation duration
+        });
+
+        // Mode selection button listeners
+        pvpModeBtn.addEventListener('click', () => {
+            gameMode = 'PvP';
+            modeSelectionEl.classList.add('hidden'); // Hide mode selection
+            gameContainerEl.classList.remove('hidden'); // Show game container
+            initializeGame();
+        });
+
+        cpuModeBtn.addEventListener('click', () => {
+            gameMode = 'PvCPU';
+            modeSelectionEl.classList.add('hidden'); // Hide mode selection
+            gameContainerEl.classList.remove('hidden'); // Show game container
+            initializeGame();
+        });
+
+        // New button listeners
+        restartGameBtn.addEventListener('click', restartGame);
+        backToMenuBtn.addEventListener('click', backToMenu);
+        playAgainBtn.addEventListener('click', restartGame); // "Main Lagi" button in win modal
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            modeSelectionEl.classList.remove('hidden'); // Show mode selection initially
+            gameContainerEl.classList.add('hidden'); // Hide game container initially
+        };
+
+    </script>
+</body>
+    <script>
+    // Top Bar Controls Initialization
+    window.addEventListener('load', function() {
+        // Sound controls
+        let isMuted = false;
+        let globalVolume = 0.5;
+        const soundToggleBtn = document.getElementById('sound-toggle');
+        const volumeSlider = document.getElementById('volume-slider');
+        soundToggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            window.isMuted = isMuted;
+            soundToggleBtn.textContent = isMuted ? '🔇' : '🔊';
+            if (menuMusicAudio) {
+                if (isMuted) {
+                    menuMusicAudio.pause();
+                } else {
+                    menuMusicAudio.play().catch(e => {});
+                }
+            }
+        });
+        volumeSlider.addEventListener('input', (e) => {
+            globalVolume = parseFloat(e.target.value);
+            window.globalVolume = globalVolume;
+            if (menuMusicAudio) {
+                menuMusicAudio.volume = globalVolume;
+            }
+        });
+        // Help modal controls
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        if (helpBtn && helpModal && closeHelpBtn) {
+            helpBtn.addEventListener('click', () => {
+                helpModal.style.display = 'flex';
+            });
+            closeHelpBtn.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+            window.addEventListener('click', (e) => {
+                if (e.target === helpModal) helpModal.style.display = 'none';
+            });
+        }
+        // Dark mode controls
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        function setDarkMode(on) {
+            if (on) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = '☀️ Light Mode';
+            } else {
+                document.body.classList.remove('dark-mode');
+                darkModeToggle.textContent = '🌙 Dark Mode';
+            }
+            localStorage.setItem('darkMode', on ? '1' : '0');
+        }
+        darkModeToggle.addEventListener('click', () => {
+            setDarkMode(!document.body.classList.contains('dark-mode'));
+        });
+        if (localStorage.getItem('darkMode') === '1') {
+            setDarkMode(true);
+        }
+        // Override playAudio globally
+        window.playAudio = function(src) {
+            if (src && !isMuted) {
+                const audio = new Audio(src);
+                audio.volume = globalVolume;
+                audio.play().catch(e => {});
+            }
+        }
+    });
+    </script>
+</html>
