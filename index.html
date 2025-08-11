@@ -1,5 +1,153 @@
 
         <style>
+    @media (max-width: 600px) {
+        body, #game-container {
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh;
+        }
+        #game-board {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+    }
+    @media (max-width: 600px) {
+        #game-info {
+            flex-direction: column-reverse !important;
+        }
+    }
+    @media (max-width: 600px) {
+        #game-board {
+            max-height: 80vw;
+            overflow-y: auto;
+            margin-top: 2vw;
+        }
+    }
+    /* Visually improved mobile layout */
+    @media (max-width: 600px) {
+        body {
+            background: #e2f0f7;
+        }
+        #game-container {
+            padding: 0 2vw;
+        }
+        #game-board {
+            margin-top: 20vw;
+            margin-bottom: 4vw;
+            border-radius: 1.2rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+        }
+        #game-info {
+            gap: 2vw;
+        }
+        .flex.flex-col.items-center.gap-4.mt-4.w-full {
+            gap: 2vw;
+        }
+        #dice-area {
+            margin-bottom: 3vw;
+        }
+        #roll-dice-btn {
+            width: 90vw;
+            max-width: 350px;
+            font-size: 1.3rem;
+            padding: 1.1rem 0;
+            margin-bottom: 2vw;
+            border-radius: 1.2rem;
+        }
+        .flex.flex-col.sm\:flex-row.gap-4.w-full.justify-center {
+            flex-direction: column !important;
+            gap: 2vw !important;
+            align-items: center !important;
+        }
+        #restart-game-btn, #back-to-menu-btn {
+            width: 90vw;
+            max-width: 350px;
+            font-size: 1.1rem;
+            padding: 0.9rem 0;
+            border-radius: 1.1rem;
+            margin-bottom: 2vw;
+        }
+        #back-to-menu-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #dark-mode-toggle {
+            display: inline-block !important;
+            position: static !important;
+            margin-left: 10px;
+            font-size: 1.1rem !important;
+            padding: 0.5rem 0.8rem !important;
+            border-radius: 1rem !important;
+            box-shadow: none !important;
+            background: #23272f;
+            color: #facc15;
+        }
+    }
+    /* Mobile: move dark mode toggle next to 'Kembali ke Menu' button */
+    @media (max-width: 600px) {
+        #top-bar {
+            display: none !important;
+        }
+        #back-to-menu-btn {
+            position: relative;
+        }
+        #dark-mode-toggle {
+            display: inline-block !important;
+            position: absolute;
+            right: -54px;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 8px;
+            font-size: 1.1rem !important;
+            padding: 0.5rem 0.8rem !important;
+            border-radius: 1rem !important;
+            box-shadow: none !important;
+        }
+    }
+    /* Mobile: hide mute, instruction, and volume slider controls */
+    @media (max-width: 600px) {
+        #sound-toggle, #help-btn, #volume-slider {
+            display: none !important;
+        }
+    }
+    /* Mobile: disable mute, instruction, and volume slider controls */
+    @media (max-width: 600px) {
+        #sound-toggle, #help-btn, #volume-slider {
+            pointer-events: none !important;
+            opacity: 0.5 !important;
+        }
+    }
+    /* Mobile: move top-bar controls below board, make smaller and horizontal */
+    @media (max-width: 600px) {
+        #top-bar {
+            position: static !important;
+            width: 100vw;
+            margin: 2vw auto 0 auto;
+            display: flex !important;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            box-shadow: none;
+        }
+        #top-bar button, #top-bar input {
+            font-size: 1.1rem !important;
+            padding: 0.5rem 0.8rem !important;
+            min-width: 0 !important;
+            width: auto !important;
+            border-radius: 1rem !important;
+            box-shadow: none !important;
+        }
+        #volume-slider {
+            width: 60px !important;
+        }
+    }
+    /* Remove mobile-only hide: all elements visible on mobile */
         .dark-mode body {
             background-color: #18181b !important;
             color: #e5e7eb !important;
