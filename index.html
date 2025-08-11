@@ -1,6 +1,35 @@
 
         <style>
     @media (max-width: 600px) {
+        .square {
+            position: relative;
+        }
+        .player-token {
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 1.8rem !important;
+            height: 1.8rem !important;
+        }
+    }
+    /* Mobile: hide all except menu option buttons when menu is shown */
+    @media (max-width: 600px) {
+        body.menu-active #game-container,
+        body.menu-active #top-bar,
+        body.menu-active #help-modal,
+        body.menu-active #card-modal,
+        body.menu-active #win-modal {
+            display: none !important;
+        }
+        body.menu-active #mode-selection {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+    }
+    @media (max-width: 600px) {
         body, #game-container {
             display: flex !important;
             flex-direction: column;
